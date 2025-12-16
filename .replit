@@ -1,0 +1,61 @@
+run = "npm run dev"
+entrypoint = "index.js"
+hidden = [".config", "package-lock.json", ".next", ".swc"]
+modules = ["nodejs-20", "web"]
+
+[nix]
+channel = "stable-25_05"
+
+[env]
+NEXT_TELEMETRY_DISABLED = "1"
+
+[deployment]
+build = ["npm", "run", "build"]
+deploymentTarget = "autoscale"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 33643
+externalPort = 3000
+
+[[ports]]
+localPort = 33685
+externalPort = 3001
+
+[[ports]]
+localPort = 38321
+externalPort = 3002
+
+[agent]
+expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "dev"
+
+[[workflows.workflow]]
+name = "dev"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"

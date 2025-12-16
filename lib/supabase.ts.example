@@ -1,0 +1,111 @@
+/**
+ * Supabase Client Configuration
+ * 
+ * This file is currently disabled (renamed to .example).
+ * 
+ * TO ENABLE SUPABASE:
+ * 1. Rename this file from `supabase.ts.example` to `supabase.ts`
+ * 2. Install Supabase client: npm install @supabase/supabase-js
+ * 3. Add environment variables to Vercel/Replit:
+ *    - NEXT_PUBLIC_SUPABASE_URL
+ *    - NEXT_PUBLIC_SUPABASE_ANON_KEY
+ *    - SUPABASE_SERVICE_ROLE_KEY (for server-side only)
+ * 4. Uncomment the code below
+ * 5. Follow SUPABASE_INTEGRATION.md for complete setup
+ */
+
+/*
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Missing Supabase environment variables. Please add:\n' +
+    '- NEXT_PUBLIC_SUPABASE_URL\n' +
+    '- NEXT_PUBLIC_SUPABASE_ANON_KEY\n' +
+    'See SUPABASE_INTEGRATION.md for details.'
+  );
+}
+
+// Client-side Supabase instance
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Server-side Supabase instance (use only in API routes)
+export function getServiceSupabase() {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!serviceKey) {
+    throw new Error(
+      'SUPABASE_SERVICE_ROLE_KEY is required for server-side operations'
+    );
+  }
+  
+  return createClient(supabaseUrl, serviceKey);
+}
+
+// Type definitions for database
+export type Database = {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          email: string;
+          full_name: string | null;
+          company_name: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          full_name?: string | null;
+          company_name?: string | null;
+        };
+        Update: {
+          full_name?: string | null;
+          company_name?: string | null;
+        };
+      };
+      questionnaire_submissions: {
+        Row: {
+          id: string;
+          user_id: string;
+          company_name: string;
+          industry: string;
+          // ... add all other fields from schema
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          company_name: string;
+          industry: string;
+          // ... add all other required fields
+        };
+        Update: {
+          // ... updatable fields
+        };
+      };
+      ai_recommendations: {
+        Row: {
+          id: string;
+          user_id: string;
+          submission_id: string;
+          recommendations: any; // JSONB
+          project_blueprint: any | null; // JSONB
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          submission_id: string;
+          recommendations: any;
+          project_blueprint?: any | null;
+        };
+      };
+    };
+  };
+};
+*/

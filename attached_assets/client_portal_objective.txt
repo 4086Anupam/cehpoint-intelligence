@@ -1,0 +1,289 @@
+1. Objective
+
+Build a client portal where CEHPOINT clients can:
+
+Create an account
+
+Provide business information OR upload their business profile document
+
+Receive automated service recommendations (later powered by Gemini)
+
+View their personalized recommendations inside a clean, premium dashboard
+
+Understand exactly why each service is relevant to their business
+
+Request a meeting with CEHPOINT
+
+This creates a consulting-like experience without manual sales intervention.
+
+2. Two Ways to Provide Business Information
+
+Clients must be given two options:
+
+Option A — Upload Business Profile
+
+They upload their company profile PDF, pitch deck, or any business document.
+
+System extracts or stores the data for Gemini processing later.
+
+Option B — Answer Structured Questions
+
+The portal asks everything normally found inside a professional business profile.
+
+Client answers these questions in a step-by-step flow.
+
+Both options produce the same dataset.
+
+3. Complete List of Information to Collect (Final)
+
+This list covers everything required to build an accurate business profile and allow Gemini to recommend the correct IT + cybersecurity services.
+
+A. Basic Company Information
+
+Legal business name
+
+Trading name (optional)
+
+Website URL
+
+Industry / sector
+
+Year established
+
+Registered address
+
+Operating locations (cities/countries served)
+
+B. Leadership & Contact Information
+
+Founder/CEO name
+
+IT decision-maker name
+
+Email
+
+Phone
+
+Preferred communication method (email/call/WhatsApp)
+
+C. Company Size & Structure
+
+Number of employees
+
+Number of technical/IT staff
+
+Whether they outsource IT
+
+Departments currently active (HR/Finance/Operations/Sales/IT/etc.)
+
+D. Business Description (Core Section)
+
+Ask the client:
+
+What does your company do (short description)?
+
+What products/services do you offer?
+
+Who are your customers (B2B/B2C)?
+
+Which markets do you serve?
+
+What client problem do you solve?
+
+Your unique selling proposition (USP)
+
+This is the heart of the business profile.
+
+E. Operational Overview
+
+Simple description of how their business operates
+
+Their internal workflow/process
+
+Tools currently used (Excel, CRM, ERP, billing software, etc.)
+
+Areas where operations are still manual
+
+Areas where they struggle in day-to-day operations
+
+F. Technology Stack & Digital Assets
+
+Do you have a website?
+
+Do you have mobile apps?
+
+Do you have custom software?
+
+Do you use CRM?
+
+Do you use ERP?
+
+Do you use cloud platforms (AWS/Azure/GCP)?
+
+Do you use any automation tools?
+
+These are extremely important for IT service recommendations.
+
+G. Technology Maturity (Current IT Health)
+
+Ask:
+
+Are you satisfied with your current IT systems?
+
+Do you face downtime, slow systems, or integration issues?
+
+Are your tools outdated or inefficient?
+
+Is your team able to work productively with existing systems?
+
+This determines digital maturity.
+
+H. Cybersecurity Maturity
+
+Ask:
+
+Do you currently have cybersecurity solutions installed?
+
+Do you conduct penetration testing?
+
+Do you follow any compliance (ISO, GDPR, SOC)?
+
+Have you ever faced a security incident?
+
+Are you aware of potential risks?
+
+This helps Gemini select correct cybersecurity services.
+
+I. Pain Points (Most Critical Section)
+
+Ask them to list their top challenges:
+
+Business challenges
+
+Technology challenges
+
+Cybersecurity concerns
+
+Process inefficiencies
+
+Sales/marketing difficulties
+
+Scaling challenges
+
+Pain points drive the recommendation engine.
+
+J. Business Goals
+
+Ask:
+
+What are your short-term goals (6 months)?
+
+What are your long-term goals (1–3 years)?
+
+Do you want more automation?
+
+Do you want more security?
+
+Do you want to reduce costs?
+
+Do you want to increase efficiency or sales?
+
+This makes recommendations personalized and strategic.
+
+K. Budget Range (Optional)
+
+Low
+
+Medium
+
+High
+
+Not sure (let us suggest based on priority)
+
+This prevents unrealistic suggestions.
+
+L. Document Uploads
+
+For clients selecting the upload option:
+
+Business profile
+
+Pitch deck
+
+Technical requirement document
+
+Company presentation
+
+These documents give Gemini more context.
+
+M. Transparency & Consent
+
+Before submission:
+
+Client must agree to:
+
+Data used only for service recommendations
+
+CEHPOINT can use this information for consulting purposes
+
+No sensitive data will be misused
+
+This ensures 0 controversy and builds trust.
+
+4. Client Dashboard (What They Will See After Login)
+
+After submitting information, the client enters their panel, which shows:
+
+A. Business Overview
+
+Clear summary of all data they provided.
+
+B. Pain Point Summary
+
+Highlights their biggest challenges.
+
+C. Recommended Services (Generated Later by Gemini)
+
+Each service should show:
+
+What the service is
+
+Why it is needed
+
+How it benefits their business
+
+Which of their pain points it solves
+
+Expected impact
+
+This makes recommendations impossible to ignore.
+
+D. Optional Add-ons
+
+Additional services the client may consider.
+
+E. Meeting Request Button
+
+Client can request a call/meeting with CEHPOINT.
+
+5. Final Flow Summary
+
+Client signs up
+
+Client chooses: upload business profile OR answer questions
+
+Portal collects all required information
+
+Data saved
+
+Client logs in
+
+Client sees a professional dashboard with:
+
+Summary
+
+Pain points
+
+Recommended services
+
+Client can request a meeting from the same page

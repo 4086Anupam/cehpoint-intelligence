@@ -1,0 +1,209 @@
+Project brief — Gemini-powered Recommendation Portal (with action buttons, explainability, and controversy-risk controls)
+
+Below is a concise, developer-ready concept-level plan you can share. It focuses on: clear client action buttons (so clients can inspect why a recommendation was made), strong safeguards to reduce disputes, and design choices that minimize operational, legal, and ethical loopholes. I won’t include deep technical specs — just behavior, UI elements, data to collect, and governance/UX rules your team must follow to keep this robust and defensible.
+
+1) High-level product idea (one-line)
+
+An AI (Gemini) driven portal that accepts client business inputs, generates prioritized IT & cybersecurity recommendations, and offers interactive buttons so clients can inspect the evidence, challenge suggestions, or instantly book a meeting — while preserving full auditability, transparency, and legal/privacy controls to minimize disputes.
+
+2) Key user-facing buttons (and what they do)
+
+Place these next to each recommended item (and also globally for the full report).
+
+Why this for you — short human-readable rationale (1–2 sentences).
+
+Show evidence — shows the input fields, relevant extracted facts, and any internal reasoning snippets (structured), plus the Gemini response block and the confidence score.
+
+View risks if ignored — concrete business/financial/operational impact statements and examples.
+
+View alternative options — lower-cost or phased alternatives and estimated pros/cons.
+
+Request change / Flag — client can mark the recommendation as incorrect or incomplete and submit a reason; creates a ticket for human review.
+
+Book meeting — calendar picker + suggested times; attaches the full report and client questions automatically.
+
+Download proposal (PDF) — auto-generated proposal with timestamp, version number, and signature area.
+
+Share with colleague — email/share link with access controls and expiry.
+
+Disagree (appeal) — structured form for formal dispute that triggers escalation to senior analyst with SLA.
+
+Button UI rules
+
+Buttons must be visible but not aggressive—use clear wording and short microcopy explaining what clicking will do.
+
+Each button click must be recorded in the audit log with user id, timestamp, and payload viewed.
+
+3) Information to collect (to make Gemini outputs explainable and defensible)
+
+Collect rich, structured fields — required items first, optional later.
+
+A. Identity & contact (required)
+
+Company name, industry, website, primary contact name, role, email, phone.
+
+B. Business scale & scope (required)
+
+No. employees, revenue band (range), number of locations/branches, customer types (B2B/B2C).
+
+C. IT & data facts (required)
+
+Hosting type and provider, tech stack (web/mobile/custom), critical systems (CRM/ERP/payment), data sensitivity (customer PII/financial/health), cloud/on-prem, backup frequency.
+
+D. Security posture (required)
+
+Existing security controls (firewall, EDR, IAM, SIEM), frequency of audits, previous incidents (date & brief), compliance obligations (PCI/GDPR/ISO/HIPAA etc).
+
+E. Pain points & objectives (required)
+
+Free text + picklist tags (downtime, phishing, slow performance, regulatory audit upcoming, migrate to cloud, automation).
+
+F. Business impact estimates (optional but recommended)
+
+Estimated revenue lost per hour of downtime, approximate number of sensitive records.
+
+G. Consents & legal (required)
+
+Explicit checkbox consenting to AI analysis, data retention policy acknowledgement, permission to contact, opt-in for sharing report with third parties.
+
+Design tips:
+
+Use structured picklists + short free text to enable reproducible, auditable inputs.
+
+Keep a versioned copy of every submitted form.
+
+4) Gemini prompt & explainability (conceptual guidance)
+
+Design the prompt so outputs are: (a) concise recommendation, (b) prioritized list, (c) clear evidence mapping, (d) confidence level, (e) actionable next steps.
+
+Prompt behavior requirements (for developer):
+
+Ask Gemini to produce:
+
+A short recommendation summary (max 50 words).
+
+Priority level and numeric risk score (0–100).
+
+Specific facts from the client input the recommendation relies on (fact list).
+
+Explicit assumptions made.
+
+Alternatives and estimated costs/time.
+
+A recommended next human action (e.g., “Schedule VAPT — human review required before engagement”).
+
+Explainability features
+
+Display Gemini’s cited facts and assumptions under Show evidence.
+
+Show a confidence score and a short note when confidence < threshold (e.g., “Low confidence — human review recommended”).
+
+Always include the prompt version and the Gemini model name in the report header (for traceability).
+
+Mitigate hallucinations
+
+Use grounded prompting: prefer extracting/rephrasing client inputs rather than open inference.
+
+When Gemini suggests facts not present in input, mark them as “inferred” and show the basis.
+
+If Gemini’s confidence is low or it uses unsupported assumptions, require human sign-off before sales outreach or contractual proposals.
+
+5) Governance, legal & privacy controls (to minimize disputes & controversy)
+
+You cannot guarantee “0 controversy,” but these controls drastically reduce risks:
+
+Data protection & consent
+
+Explicit consent flow at intake (purpose, retention, sharing).
+
+Encrypt data at rest and in transit (TLS + AES-256).
+
+Role-based access control (RBAC) for admin users.
+
+Data retention policy with automated deletion options and export (user right to be forgotten/export).
+
+Auditability & versioning
+
+Immutable audit log for: submissions, AI prompts, model responses, button clicks, downloads, and changes.
+
+Version number each report; store previous versions for at least the retention window.
+
+Tamper-evident hashes on final PDF proposals (for legal defensibility).
+
+Human-in-the-loop & SLA
+
+Any “critical” recommendation (risk score > threshold) must queue for a human validator before contract/proposal issuance.
+
+Define SLAs for dispute resolution (e.g., 48–72 hours for human review).
+
+Provide a clear escalation path and contact details in the report.
+
+Transparency & disclaimers
+
+Every recommendation must include a concise legal disclaimer: AI-assisted, consultative only, may require further technical audit.
+
+Provide an easy-to-read “How this was decided” panel (the facts and assumptions list).
+
+Bias & fairness
+
+Periodic review of training examples and outputs for systematic bias.
+
+Store anonymized cases for model evaluation and to tune the prompt.
+
+Third-party & API controls
+
+Log every external API call (Gemini, calendar, cloud).
+
+Require API rate limits, input sanitization, and consent before any data is sent to third parties.
+
+Maintain a vendor security checklist for any third-party integrations.
+
+Compliance checklist (minimum)
+
+Consent yes/no recorded; encryption enabled; RBAC; retention rule; audit logs; human review for critical items; clear legal disclaimers; appeals process.
+
+6) UX and display rules to make it non-ignorable — but fair
+
+Top-of-report prominent Risk Score and Top 3 actions (one-line each).
+
+Use clear color coding (red/yellow/green) but pair with exact numbers and explanatory text (avoid fear-only language).
+
+Include evidence CTA next to each high-risk item to let clients verify reasoning.
+
+Keep language plain, avoid jargon.
+
+Include estimated “cost of inaction” numerically where possible.
+
+Accessibility: readable fonts, keyboard navigation, and screen-reader friendly labels.
+
+7) Handling disagreements / disputes
+
+Client clicks Disagree → structured form for reason + optional attachments.
+
+System creates a ticket with the report snapshot; notifies analyst.
+
+Analyst reviews within SLA, can: adjust recommendation, mark explanation as clarified, or escalate to senior with +customer reply.
+
+Provide audit trail of decision and send updated PDF with new version number.
+
+8) Admin features (essential)
+
+View submission list with filters (risk score, status, assigned analyst).
+
+Audit viewer: view prompt, Gemini response, client input snapshot, and button-click logs.
+
+Approve/Reject critical recommendations before proposal generation.
+
+Export case data for compliance or model improvement (anonymized where needed).
+
+Settings: confidence threshold, SLA times, retention periods, RBAC controls.
+
+9) Testing, rollout & monitoring
+
+Start with a staged rollout: internal testing → pilot clients → full launch.
+
+Keep human validator in the loop for first N submissions to build trust and gather edge cases.
+
+Monitor false positives/negatives and track appeals rate; aim to reduce appeals month over month.
+
+Maintain a changelog of prompt versions and model versions.
