@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import fs from 'fs';
 import mammoth from 'mammoth';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse');
 
 export const config = {
   api: {
@@ -35,11 +37,7 @@ export default async function handler(
     
     if (mimeType === 'application/pdf') {
       const dataBuffer = fs.readFileSync(filePath);
-      // eslint-disable-next-line
-      const pdfParse = require('pdf-parse');
-      // Handle both CommonJS and ES module exports
-      const parser = pdfParse.default || pdfParse;
-      const data = await parser(dataBuffer);
+      const data = await pdfParse(dataBuffer);
       content = data.text;
       
       if (!content || content.trim().length === 0) {
@@ -61,6 +59,8 @@ export default async function handler(
     }
 
     fs.unlinkSync(filePath);
+    console.log(content);
+    
     
     res.status(200).json({ content, fileName });
   } catch (error) {

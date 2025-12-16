@@ -57,7 +57,7 @@ Return ONLY a valid JSON object in this exact format:
 }`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         temperature: 0.7,
@@ -69,6 +69,7 @@ Return ONLY a valid JSON object in this exact format:
     if (!response.text) {
       return res.status(200).json({ suggestions: [] });
     }
+    console.log(response.text);
     
     const parsed = JSON.parse(response.text);
 

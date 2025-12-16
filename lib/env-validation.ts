@@ -25,9 +25,7 @@ export function validateEnv() {
 }
 
 // Call this in API routes to ensure environment is configured
-export function requireEnv<T>(value: T , name: string): T {
-  console.log(value);
-  
+export function requireEnv<T>(value: T , name: string): T {  
   if (value === undefined || value === null || value === '') {
     throw new Error(`Environment variable ${name} is required but not set`);
   }

@@ -3,14 +3,14 @@ import { useRouter } from 'next/router';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import TopBar from '@/components/TopBar';
-import { isAuthenticated } from '@/lib/storage';
-import { FileText, Upload, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { isAuthenticated, getSession, saveSession, getUser } from '@/lib/storage';
+import { FileText, Upload, AlertCircle, CheckCircle, Loader, X, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Discovery() {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
-  const [fileName, setFileName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -32,27 +32,54 @@ export default function Discovery() {
     router.push('/questionnaire');
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Please upload a PDF, DOCX, or TXT file');
+    if (!file) {
+      console.log('No file selected');
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    console.log('File selected:', file.name, 'Type:', file.type, 'Size:', file.size);
+
+    // Check by both MIME type and file extension for better compatibility
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+    const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt'];
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    
+    const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension);
+    
+    if (!isValidType) {
+      toast.error('Please upload a PDF, DOCX, or TXT file');
+      console.log('Invalid file type:', file.type, 'Extension:', fileExtension);
+      return;
+    }
+
+    if (file.size > 30 * 1024 * 1024) {
       toast.error('File size must be less than 10MB');
       return;
     }
 
+    // Store the file
+    console.log('Setting selected file:', file.name);
+    setSelectedFile(file);
+    toast.success(`File "${file.name}" selected. Click "Analyze Document" to proceed.`);
+    
+    // Reset input value to allow re-selecting the same file
+    e.target.value = '';
+  };
+
+  const handleAnalyzeDocument = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a file first');
+      return;
+    }
+
     setUploading(true);
-    setFileName(file.name);
     
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', selectedFile);
+      
 
       const parseResponse = await fetch('/api/parse-file', {
         method: 'POST',
@@ -79,13 +106,20 @@ export default function Discovery() {
 
       const profile = await analyzeResponse.json();
 
-      if (typeof window !== 'undefined') {
-        const session = JSON.parse(localStorage.getItem('session') || '{}');
-        session.businessProfile = profile;
-        localStorage.setItem('session', JSON.stringify(session));
-      }
+      // Save business profile to session using proper storage function
+      const currentSession = getSession();
+      const user = await getUser();
+      saveSession({
+        userId: currentSession?.userId || user?.id || '',
+        lastUpdated: new Date().toISOString(),
+        ...currentSession,
+        businessProfile: profile
+      });
 
       toast.success('Business profile extracted successfully!');
+      
+      // Clear selected file after successful processing
+      setSelectedFile(null);
       
       setTimeout(() => {
         router.push({
@@ -103,8 +137,11 @@ export default function Discovery() {
       }
     } finally {
       setUploading(false);
-      e.target.value = '';
     }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
   };
 
   return (
@@ -134,23 +171,9 @@ export default function Discovery() {
               </p>
               
               <div className="max-w-md mx-auto">
-                <label htmlFor="file-upload" className="block">
-                  <div className={`border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer ${
-                    uploading 
-                      ? 'border-gray-300 bg-gray-50' 
-                      : 'border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400'
-                  }`}>
-                    {uploading ? (
-                      <div className="flex flex-col items-center gap-3">
-                        <Loader className="w-8 h-8 text-blue-600 animate-spin" />
-                        <p className="text-sm font-medium text-gray-700">
-                          Processing {fileName}...
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Extracting and analyzing your business information
-                        </p>
-                      </div>
-                    ) : (
+                {!selectedFile ? (
+                  <label htmlFor="file-upload" className="block">
+                    <div className="border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400">
                       <div className="flex flex-col items-center gap-3">
                         <FileText className="w-10 h-10 text-blue-600" />
                         <p className="text-sm font-medium text-gray-700">
@@ -160,17 +183,73 @@ export default function Discovery() {
                           PDF, DOCX, or TXT (max 10MB)
                         </p>
                       </div>
+                    </div>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.docx,.doc,.txt"
+                      onChange={handleFileUpload}
+                      disabled={uploading}
+                    />
+                  </label>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Selected file display */}
+                    <div className="border-2 border-green-300 bg-green-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-medium text-gray-900 truncate max-w-[200px]">
+                              {selectedFile.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {(selectedFile.size / 1024).toFixed(1)} KB
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleRemoveFile}
+                          disabled={uploading}
+                          className="p-1.5 rounded-full hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                          title="Remove file"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Analyze button */}
+                    <Button 
+                      fullWidth 
+                      size="lg" 
+                      onClick={handleAnalyzeDocument}
+                      disabled={uploading}
+                      variant="primary"
+                    >
+                      {uploading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader className="w-5 h-5 animate-spin" />
+                          Analyzing Document...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-2">
+                          <Sparkles className="w-5 h-5" />
+                          Analyze Document
+                        </span>
+                      )}
+                    </Button>
+
+                    {uploading && (
+                      <p className="text-xs text-center text-gray-500">
+                        Extracting and analyzing your business information...
+                      </p>
                     )}
                   </div>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.docx,.doc,.txt"
-                    onChange={handleFileUpload}
-                    disabled={uploading}
-                  />
-                </label>
+                )}
               </div>
 
               <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
