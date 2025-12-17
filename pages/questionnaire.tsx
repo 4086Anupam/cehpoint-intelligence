@@ -1,6 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Button from '@/components/Button';
+
+// LocalStorage helpers for live suggestions caching
+const SUGGESTIONS_CACHE_KEY = 'cpis_live_suggestions_cache';
+
+interface SuggestionsCache {
+  suggestions: any[];
+  sectionNumber: number;
+}
+
+const saveSuggestionsToCache = (suggestions: any[], sectionNumber: number) => {
+  try {
+    const cache: SuggestionsCache = { suggestions, sectionNumber };
+    console.log("Storing in cache : ", cache);
+    
+    localStorage.setItem(SUGGESTIONS_CACHE_KEY, JSON.stringify(cache));
+  } catch (e) {
+    console.error('Error saving suggestions to cache:', e);
+  }
+};
+
+const getSuggestionsFromCache = (): SuggestionsCache | null => {
+  try {
+    const cached = localStorage.getItem(SUGGESTIONS_CACHE_KEY);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (e) {
+    console.error('Error reading suggestions from cache:', e);
+  }
+  return null;
+};
+
+const clearSuggestionsCache = () => {
+  try {
+    localStorage.removeItem(SUGGESTIONS_CACHE_KEY);
+  } catch (e) {
+    console.error('Error clearing suggestions cache:', e);
+  }
+};
 import Input from '@/components/Input';
 import Select from '@/components/Select';
 import MultiSelect from '@/components/MultiSelect';
@@ -85,8 +124,8 @@ export default function Questionnaire() {
         setFormData(normalizedData);
         if (draft.customIndustry) setCustomIndustry(draft.customIndustry);
         if (draft.currentSection) setCurrentSection(draft.currentSection);
-        // Fetch suggestions when loading draft data
-        setTimeout(() => fetchLiveSuggestions(normalizedData), 500);
+        // Check cache first, then fetch if needed
+        setTimeout(() => fetchLiveSuggestions(normalizedData, false), 500);
       } else if (fromUpload) {
         const session = getSession();
         if (session?.businessProfile) {
@@ -97,8 +136,14 @@ export default function Questionnaire() {
               : session.businessProfile.operatingRegions ? [session.businessProfile.operatingRegions] : []
           };
           setFormData(normalizedData);
-          // Fetch suggestions when loading uploaded profile data
-          setTimeout(() => fetchLiveSuggestions(normalizedData), 500);
+          // Check cache first, then fetch if needed
+          setTimeout(() => fetchLiveSuggestions(normalizedData, false), 500);
+        }
+      } else {
+        // No draft or upload - check if there's cached suggestions to display
+        const cachedData = getSuggestionsFromCache();
+        if (cachedData && cachedData.suggestions.length > 0 && cachedData.sectionNumber >= currentSection) {
+          setLiveSuggestions(cachedData.suggestions);
         }
       }
     };
@@ -107,6 +152,7 @@ export default function Questionnaire() {
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, fromUpload]);
 
   useEffect(() => {
@@ -119,7 +165,7 @@ export default function Questionnaire() {
     }
   }, [formData, customIndustry, currentSection]);
 
-  const fetchLiveSuggestions = async (data?: BusinessProfile) => {
+  const fetchLiveSuggestions = useCallback(async (data?: BusinessProfile, forceRefresh: boolean = false) => {
     const checkData = data || formData;
     const hasContent = Object.values(checkData).some(value => {
       if (typeof value === 'boolean') return false;
@@ -132,6 +178,20 @@ export default function Questionnaire() {
       return;
     }
 
+    // Check localStorage cache first
+    if (!forceRefresh) {
+      const cachedData = getSuggestionsFromCache();
+      if (cachedData && cachedData.suggestions.length > 0) {
+        // If cached section is >= current section, use cached data
+        // If current section is greater than cached section, we need fresh data
+        if (cachedData.sectionNumber >= currentSection) {
+          setLiveSuggestions(cachedData.suggestions);
+          return;
+        }
+      }
+    }
+
+    // No valid cache or forceRefresh - make API call
     try {
       setLoadingSuggestions(true);
       const response = await fetch('/api/get-live-suggestions', {
@@ -141,15 +201,20 @@ export default function Questionnaire() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setLiveSuggestions(data.suggestions || []);
+        const result = await response.json();
+        const suggestions = result.suggestions || [];
+        setLiveSuggestions(suggestions);
+        console.log("Storing in cache : ");
+        
+        // Save to localStorage with current section number
+        saveSuggestionsToCache(suggestions, currentSection);
       }
     } catch (error) {
       console.error('Error fetching suggestions:', error);
     } finally {
       setLoadingSuggestions(false);
     }
-  }
+  }, [formData, currentSection]);
 
   // Remove auto-fetch on form changes - only fetch on Next button click or initial load
 
@@ -407,9 +472,11 @@ export default function Questionnaire() {
 
   const handleNext = () => {
     if (currentSection < sections.length - 1) {
-      setCurrentSection(currentSection + 1);
+      const nextSection = currentSection + 1;
+      setCurrentSection(nextSection);
       window.scrollTo(0, 0);
-      fetchLiveSuggestions();
+      // Force refresh when moving to next section (new data needs to be fetched)
+      setTimeout(() => fetchLiveSuggestions(undefined, true), 100);
     }
   };
 
@@ -485,6 +552,7 @@ export default function Questionnaire() {
       
       saveSession(session);
       clearQuestionnaireDraft();
+      clearSuggestionsCache(); // Clear suggestions cache on successful submission
       toast.dismiss();
       toast.success('Recommendations generated successfully!');
       

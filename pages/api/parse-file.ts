@@ -2,8 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import fs from 'fs';
 import mammoth from 'mammoth';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse');
+import pdfParse from 'pdf-parse';
 
 export const config = {
   api: {
