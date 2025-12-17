@@ -49,7 +49,7 @@ import { isAuthenticated, saveSession, getSession, getUser, saveQuestionnaireDra
 import { supabase } from '@/lib/supabase';
 import { BusinessProfile } from '@/types';
 import { ArrowRight, ArrowLeft, Sparkles, Check, Cloud, Shield, Zap, Brain, Target, Lock, Database, Workflow, Lightbulb, TrendingUp, MessageCircle, CheckCircle } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 export default function Questionnaire() {
   const router = useRouter();
@@ -572,7 +572,6 @@ export default function Questionnaire() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 page-transition">
-      <Toaster position="top-right" />
       <TopBar />
       
       <div className="container mx-auto px-4 py-8 md:py-12">

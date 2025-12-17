@@ -11,7 +11,7 @@ import {
   Shield, Cpu, Cloud, Zap, Brain, Building, LogOut,
   MessageCircle, Phone, Mail, CheckCircle, Award, Users, Download, Send
 } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { downloadProposal, submitToCehpoint } from '@/lib/proposalGenerator';
 
 const categoryIcons: Record<ServiceCategory, any> = {
@@ -146,7 +146,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 page-transition">
-      <Toaster position="top-right" />
       <TopBar />
       
       <div className="bg-white shadow-sm border-b">

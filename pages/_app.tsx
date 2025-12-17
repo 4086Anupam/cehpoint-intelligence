@@ -11,19 +11,21 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ErrorBoundary>
       <Toaster 
-        position="top-center"
+        position="top-right"
         toastOptions={{
-          duration: 4000,
+          duration: 1000,
           style: {
             background: '#363636',
             color: '#fff',
           },
           success: {
+            duration: 1000,
             style: {
               background: '#22c55e',
             },
           },
           error: {
+            duration: 1000,
             style: {
               background: '#ef4444',
             },

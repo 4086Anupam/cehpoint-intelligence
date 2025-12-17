@@ -10,7 +10,7 @@ import {
   Sparkles, Calendar, Building2, FileText, ExternalLink, 
   ChevronRight, Clock, Search, ArrowLeft, AlertCircle, CheckCircle, Loader2
 } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 interface AnalysisHistoryItem {
   id: string;
@@ -225,14 +225,6 @@ export default function History() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 page-transition">
-      <Toaster 
-        position="top-right" 
-        toastOptions={{
-          duration: 3000,
-          success: { duration: 2000 },
-          error: { duration: 4000 },
-        }}
-      />
       <TopBar />
       
       <div className="container mx-auto px-4 py-10">

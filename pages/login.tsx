@@ -6,7 +6,7 @@ import Card from '@/components/Card';
 import { saveUser, isAuthenticated } from '@/lib/storage';
 import { Sparkles, MailCheck, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 export default function Login() {
   const router = useRouter();
@@ -120,7 +120,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 page-transition">
-      <Toaster position="top-right" />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
