@@ -60,21 +60,34 @@ Return ONLY a valid JSON object in this exact format:
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
-        temperature: 0.7,
-        maxOutputTokens: 500,
         responseMimeType: 'application/json',
       },
     });
 
-    if (!response.text) {
+    const responseText = response.text?.trim();
+    
+    if (!responseText) {
       return res.status(200).json({ suggestions: [] });
     }
-    console.log(response.text);
     
-    const parsed = JSON.parse(response.text);
+    console.log('Gemini response:', responseText);
+    
+    // Parse JSON response
+    let parsed;
+    try {
+      parsed = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return res.status(200).json({ suggestions: [] });
+    }
+    
+    // Validate the parsed structure
+    if (!parsed || !Array.isArray(parsed.suggestions)) {
+      return res.status(200).json({ suggestions: [] });
+    }
 
     return res.status(200).json({
-      suggestions: parsed.suggestions || [],
+      suggestions: parsed.suggestions,
     });
   } catch (error) {
     console.error('Live suggestions error:', error);

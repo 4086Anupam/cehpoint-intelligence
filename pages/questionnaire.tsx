@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
@@ -7,6 +7,7 @@ import MultiSelect from '@/components/MultiSelect';
 import Card from '@/components/Card';
 import TopBar from '@/components/TopBar';
 import { isAuthenticated, saveSession, getSession, getUser, saveQuestionnaireDraft, getQuestionnaireDraft, clearQuestionnaireDraft } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 import { BusinessProfile } from '@/types';
 import { ArrowRight, ArrowLeft, Sparkles, Check, Cloud, Shield, Zap, Brain, Target, Lock, Database, Workflow, Lightbulb, TrendingUp, MessageCircle, CheckCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -18,7 +19,6 @@ export default function Questionnaire() {
   const [loading, setLoading] = useState(false);
   const [liveSuggestions, setLiveSuggestions] = useState<any[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const suggestionsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [formData, setFormData] = useState<BusinessProfile>({
     businessName: '',
@@ -85,6 +85,8 @@ export default function Questionnaire() {
         setFormData(normalizedData);
         if (draft.customIndustry) setCustomIndustry(draft.customIndustry);
         if (draft.currentSection) setCurrentSection(draft.currentSection);
+        // Fetch suggestions when loading draft data
+        setTimeout(() => fetchLiveSuggestions(normalizedData), 500);
       } else if (fromUpload) {
         const session = getSession();
         if (session?.businessProfile) {
@@ -95,6 +97,8 @@ export default function Questionnaire() {
               : session.businessProfile.operatingRegions ? [session.businessProfile.operatingRegions] : []
           };
           setFormData(normalizedData);
+          // Fetch suggestions when loading uploaded profile data
+          setTimeout(() => fetchLiveSuggestions(normalizedData), 500);
         }
       }
     };
@@ -115,8 +119,9 @@ export default function Questionnaire() {
     }
   }, [formData, customIndustry, currentSection]);
 
-  const fetchLiveSuggestions = useCallback(async () => {
-    const hasContent = Object.values(formData).some(value => {
+  const fetchLiveSuggestions = async (data?: BusinessProfile) => {
+    const checkData = data || formData;
+    const hasContent = Object.values(checkData).some(value => {
       if (typeof value === 'boolean') return false;
       if (Array.isArray(value)) return value.length > 0;
       return value && value.toString().trim() !== '';
@@ -132,7 +137,7 @@ export default function Questionnaire() {
       const response = await fetch('/api/get-live-suggestions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ formData, currentSection }),
+        body: JSON.stringify({ formData: checkData, currentSection }),
       });
 
       if (response.ok) {
@@ -144,23 +149,9 @@ export default function Questionnaire() {
     } finally {
       setLoadingSuggestions(false);
     }
-  }, [formData, currentSection]);
+  }
 
-  useEffect(() => {
-    if (suggestionsTimeoutRef.current) {
-      clearTimeout(suggestionsTimeoutRef.current);
-    }
-
-    suggestionsTimeoutRef.current = setTimeout(() => {
-      fetchLiveSuggestions();
-    }, 1500);
-
-    return () => {
-      if (suggestionsTimeoutRef.current) {
-        clearTimeout(suggestionsTimeoutRef.current);
-      }
-    };
-  }, [fetchLiveSuggestions]);
+  // Remove auto-fetch on form changes - only fetch on Next button click or initial load
 
   const updateField = (field: keyof BusinessProfile, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -418,6 +409,7 @@ export default function Questionnaire() {
     if (currentSection < sections.length - 1) {
       setCurrentSection(currentSection + 1);
       window.scrollTo(0, 0);
+      fetchLiveSuggestions();
     }
   };
 
@@ -445,11 +437,32 @@ export default function Questionnaire() {
       if (formData.industry === 'Other' && customIndustry.trim()) {
         submissionData.industry = customIndustry;
       }
+
+      // Get session data including the uploaded PDF URL and pending analysis ID
+      const currentSession = getSession();
+      const businessProfilePdfUrl = currentSession?.uploadedFile?.content || null;
+      const pendingAnalysisId = currentSession?.pendingAnalysisId || null;
+
+      // Get auth token for authenticated requests
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       
       const response = await fetch('/api/analyze-profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submissionData),
+        headers,
+        body: JSON.stringify({
+          ...submissionData,
+          businessProfilePdfUrl,
+          pendingAnalysisId, // Pass the pending analysis ID to update existing record
+        }),
       });
 
       if (!response.ok) {
@@ -466,6 +479,8 @@ export default function Questionnaire() {
         recommendations: result.recommendations,
         projectBlueprint: result.projectBlueprint,
         lastUpdated: new Date().toISOString(),
+        // Clear pending analysis ID after successful completion
+        pendingAnalysisId: undefined,
       };
       
       saveSession(session);

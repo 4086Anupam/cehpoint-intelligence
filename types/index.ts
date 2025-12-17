@@ -88,5 +88,31 @@ export interface ClientSession {
     type: string;
     content: string;
   };
+  pendingAnalysisId?: string;
   lastUpdated: string;
+}
+
+export type AnalysisStatus = 'pending' | 'completed' | 'failed';
+
+export interface AnalysisHistoryItem {
+  id: string;
+  user_id: string;
+  company_name: string;
+  status: AnalysisStatus;
+  parsed_data: BusinessProfile | null;
+  business_profile: BusinessProfile | null;
+  recommendations: ServiceRecommendation[] | null;
+  project_blueprint: ProjectBlueprint | null;
+  business_profile_pdf_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AnalysisHistoryListItem {
+  id: string;
+  company_name: string;
+  status: AnalysisStatus;
+  created_at: string;
+  business_profile_pdf_url: string | null;
+  error_message?: string | null;
 }

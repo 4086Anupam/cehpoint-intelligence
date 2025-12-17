@@ -162,9 +162,100 @@ Supabase sends emails through **Resend** by default. For production:
 - Check if `logout()` is being called correctly
 - Verify Supabase session is cleared
 
-## Database Schema (Optional)
+## Database Schema
 
-For storing user data beyond authentication:
+### Required: Analysis History Table
+
+Run this SQL in your Supabase SQL Editor to enable analysis history:
+
+```sql
+-- Analysis History Table (with status tracking for pending/failed analyses)
+CREATE TABLE IF NOT EXISTS public.analysis_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  company_name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
+  parsed_data JSONB,
+  business_profile JSONB,
+  recommendations JSONB,
+  project_blueprint JSONB,
+  business_profile_pdf_url TEXT,
+  error_message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_analysis_history_user_id ON public.analysis_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_analysis_history_created_at ON public.analysis_history(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analysis_history_status ON public.analysis_history(status);
+
+-- Enable Row Level Security
+ALTER TABLE public.analysis_history ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies (users can only access their own data)
+CREATE POLICY "Users can view own analysis history"
+  ON public.analysis_history FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own analysis history"
+  ON public.analysis_history FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own analysis history"
+  ON public.analysis_history FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own analysis history"
+  ON public.analysis_history FOR DELETE USING (auth.uid() = user_id);
+
+-- Auto-update timestamp function
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for auto-updating updated_at
+DROP TRIGGER IF EXISTS set_updated_at ON public.analysis_history;
+CREATE TRIGGER set_updated_at
+  BEFORE UPDATE ON public.analysis_history
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+```
+
+You can also find the complete SQL in `DATABASE_SCHEMA.sql` in the project root.
+
+### Migration (if you have existing table)
+
+If you already have the `analysis_history` table, run this migration:
+
+```sql
+-- Add new columns for status tracking
+ALTER TABLE public.analysis_history 
+ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'failed'));
+
+ALTER TABLE public.analysis_history 
+ADD COLUMN IF NOT EXISTS parsed_data JSONB;
+
+ALTER TABLE public.analysis_history 
+ADD COLUMN IF NOT EXISTS error_message TEXT;
+
+-- Make columns nullable for pending records
+ALTER TABLE public.analysis_history 
+ALTER COLUMN business_profile DROP NOT NULL;
+
+ALTER TABLE public.analysis_history 
+ALTER COLUMN recommendations DROP NOT NULL;
+
+-- Create index for status
+CREATE INDEX IF NOT EXISTS idx_analysis_history_status ON public.analysis_history(status);
+
+-- Update existing records to completed
+UPDATE public.analysis_history SET status = 'completed' WHERE status IS NULL;
+```
+
+You can also find this in `DATABASE_MIGRATION.sql` in the project root.
+
+### Optional: Profiles Table (for additional user data)
 
 ```sql
 -- profiles table
@@ -188,6 +279,32 @@ alter table public.profiles enable row level security;
 alter table public.questionnaire_submissions enable row level security;
 ```
 
+## Cloudinary Setup (For PDF Uploads)
+
+To enable PDF upload storage in Cloudinary:
+
+### 1. Create a Cloudinary Account
+1. Go to [cloudinary.com](https://cloudinary.com)
+2. Sign up for a free account
+3. Go to your Dashboard
+
+### 2. Get Your API Credentials
+1. On the Dashboard, find your:
+   - **Cloud Name** → `CLOUDINARY_CLOUD_NAME`
+   - **API Key** → `CLOUDINARY_API_KEY`
+   - **API Secret** → `CLOUDINARY_API_SECRET`
+
+### 3. Add Environment Variables
+
+Add these to your `.env.local`:
+```
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+And to Vercel Environment Variables for production.
+
 ## Key Files Changed
 
 - `lib/supabase.ts` - Supabase client initialization
@@ -195,10 +312,14 @@ alter table public.questionnaire_submissions enable row level security;
 - `lib/storage.ts` - User session management (now uses Supabase)
 - `pages/login.tsx` - Email OTP login/signup form
 - `pages/index.tsx` - Redirects to login
-- `pages/discovery.tsx` - Protected page with async auth
+- `pages/discovery.tsx` - Protected page with async auth, Cloudinary upload
 - `pages/dashboard.tsx` - Protected page with async auth
 - `pages/questionnaire.tsx` - Protected page with async auth
-- `package.json` - Added `@supabase/supabase-js` dependency
+- `pages/history.tsx` - Analysis history page
+- `pages/api/analyze-profile.ts` - Saves analysis to Supabase
+- `pages/api/analysis-history.ts` - Fetches user's analysis history
+- `pages/api/upload-to-cloudinary.ts` - Handles PDF uploads to Cloudinary
+- `components/TopBar.tsx` - Added history link in profile dropdown
 
 ## Support
 

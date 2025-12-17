@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Sparkles, User as UserIcon, LogOut, IdCard } from 'lucide-react';
+import { Sparkles, User as UserIcon, LogOut, IdCard, History } from 'lucide-react';
 import { getUser, logout } from '@/lib/storage';
 import type { User } from '@/types';
 import toast from 'react-hot-toast';
@@ -88,6 +88,16 @@ export default function TopBar() {
                 >
                   <IdCard className="w-4 h-4 text-indigo-600" />
                   <span className="text-sm font-semibold">View Profile</span>
+                </button>
+                <button
+                  className="flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 text-gray-800"
+                  onClick={() => {
+                    setOpen(false);
+                    router.push('/history');
+                  }}
+                >
+                  <History className="w-4 h-4 text-indigo-600" />
+                  <span className="text-sm font-semibold">Analysis History</span>
                 </button>
                 <button
                   className="flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 text-red-600"

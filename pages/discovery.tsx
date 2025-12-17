@@ -4,6 +4,7 @@ import Button from '@/components/Button';
 import Card from '@/components/Card';
 import TopBar from '@/components/TopBar';
 import { isAuthenticated, getSession, saveSession, getUser } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 import { FileText, Upload, AlertCircle, CheckCircle, Loader, X, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -77,6 +78,33 @@ export default function Discovery() {
     setUploading(true);
     
     try {
+      // First, upload the file to Cloudinary
+      let cloudinaryUrl: string | null = null;
+      
+      // Only upload PDFs to Cloudinary
+      if (selectedFile.type === 'application/pdf' || selectedFile.name.toLowerCase().endsWith('.pdf')) {
+        try {
+          const cloudinaryFormData = new FormData();
+          cloudinaryFormData.append('file', selectedFile);
+          
+          const cloudinaryResponse = await fetch('/api/upload-to-cloudinary', {
+            method: 'POST',
+            body: cloudinaryFormData,
+          });
+          
+          if (cloudinaryResponse.ok) {
+            const cloudinaryResult = await cloudinaryResponse.json();
+            cloudinaryUrl = cloudinaryResult.url;
+            console.log('File uploaded to Cloudinary:', cloudinaryUrl);
+          } else {
+            console.warn('Cloudinary upload failed, continuing without URL');
+          }
+        } catch (cloudError) {
+          console.warn('Cloudinary upload error:', cloudError);
+          // Continue without Cloudinary URL
+        }
+      }
+
       const formData = new FormData();
       formData.append('file', selectedFile);
       
@@ -106,6 +134,37 @@ export default function Discovery() {
 
       const profile = await analyzeResponse.json();
 
+      // Save parsed data to database as pending analysis
+      let pendingAnalysisId: string | null = null;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        
+        if (token) {
+          const saveResponse = await fetch('/api/save-parsed-data', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              parsedData: profile,
+              companyName: profile.businessName || 'Unknown Company',
+              pdfUrl: cloudinaryUrl,
+            }),
+          });
+          
+          if (saveResponse.ok) {
+            const saveResult = await saveResponse.json();
+            pendingAnalysisId = saveResult.analysisId;
+            console.log('Parsed data saved with ID:', pendingAnalysisId);
+          }
+        }
+      } catch (saveError) {
+        console.warn('Failed to save parsed data to database:', saveError);
+        // Continue without saving - user can still proceed
+      }
+
       // Save business profile to session using proper storage function
       const currentSession = getSession();
       const user = await getUser();
@@ -113,7 +172,14 @@ export default function Discovery() {
         userId: currentSession?.userId || user?.id || '',
         lastUpdated: new Date().toISOString(),
         ...currentSession,
-        businessProfile: profile
+        businessProfile: profile,
+        // Store the Cloudinary URL and pending analysis ID in the session
+        uploadedFile: cloudinaryUrl ? {
+          name: selectedFile.name,
+          type: selectedFile.type,
+          content: cloudinaryUrl,
+        } : undefined,
+        pendingAnalysisId: pendingAnalysisId || undefined,
       });
 
       toast.success('Business profile extracted successfully!');
