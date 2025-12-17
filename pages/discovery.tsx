@@ -78,61 +78,62 @@ export default function Discovery() {
     setUploading(true);
     
     try {
-      // First, upload the file to Cloudinary using direct upload (bypasses Vercel 4.5MB limit)
+      // Upload ALL file types to Cloudinary using direct upload (bypasses Vercel 4.5MB limit)
       let cloudinaryUrl: string | null = null;
       
-      // Only upload PDFs to Cloudinary
-      if (selectedFile.type === 'application/pdf' || selectedFile.name.toLowerCase().endsWith('.pdf')) {
-        try {
-          // Step 1: Get signature from our API
-          const signatureResponse = await fetch('/api/get-cloudinary-signature', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
+      try {
+        // Step 1: Get signature from our API
+        const signatureResponse = await fetch('/api/get-cloudinary-signature', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        
+        if (signatureResponse.ok) {
+          const { signature, timestamp, folder, cloudName, apiKey } = await signatureResponse.json();
           
-          if (signatureResponse.ok) {
-            const { signature, timestamp, folder, cloudName, apiKey } = await signatureResponse.json();
-            
-            // Step 2: Upload directly to Cloudinary (bypasses Vercel limit)
-            const cloudinaryFormData = new FormData();
-            cloudinaryFormData.append('file', selectedFile);
-            cloudinaryFormData.append('signature', signature);
-            cloudinaryFormData.append('timestamp', timestamp.toString());
-            cloudinaryFormData.append('folder', folder);
-            cloudinaryFormData.append('tags', 'business-profile,uploaded-document');
-            cloudinaryFormData.append('api_key', apiKey);
-            
-            const uploadResponse = await fetch(
-              `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-              {
-                method: 'POST',
-                body: cloudinaryFormData,
-              }
-            );
-            
-            if (uploadResponse.ok) {
-              const uploadResult = await uploadResponse.json();
-              cloudinaryUrl = uploadResult.secure_url;
-              console.log('File uploaded to Cloudinary:', cloudinaryUrl);
-            } else {
-              console.warn('Cloudinary direct upload failed, continuing without URL');
+          // Step 2: Upload directly to Cloudinary (bypasses Vercel limit)
+          const cloudinaryFormData = new FormData();
+          cloudinaryFormData.append('file', selectedFile);
+          cloudinaryFormData.append('signature', signature);
+          cloudinaryFormData.append('timestamp', timestamp.toString());
+          cloudinaryFormData.append('folder', folder);
+          cloudinaryFormData.append('api_key', apiKey);
+          
+          // Use 'raw' resource type for documents (publicly accessible)
+          const uploadResponse = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
+            {
+              method: 'POST',
+              body: cloudinaryFormData,
             }
+          );
+          
+          if (uploadResponse.ok) {
+            const uploadResult = await uploadResponse.json();
+            cloudinaryUrl = uploadResult.secure_url;
+            console.log('File uploaded to Cloudinary:', cloudinaryUrl);
           } else {
-            console.warn('Failed to get Cloudinary signature, continuing without URL');
+            const errorResult = await uploadResponse.json();
+            console.error('Cloudinary upload failed:', errorResult);
+            throw new Error('Failed to upload file to cloud storage');
           }
-        } catch (cloudError) {
-          console.warn('Cloudinary upload error:', cloudError);
-          // Continue without Cloudinary URL
+        } else {
+          throw new Error('Failed to get upload signature');
         }
+      } catch (cloudError) {
+        console.error('Cloudinary upload error:', cloudError);
+        throw new Error('Failed to upload file. Please try again or use a smaller file.');
       }
 
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      
-
+      // Parse file from Cloudinary URL (no file sent through Vercel)
       const parseResponse = await fetch('/api/parse-file', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileUrl: cloudinaryUrl,
+          fileName: selectedFile.name,
+          mimeType: selectedFile.type,
+        }),
       });
 
       if (!parseResponse.ok) {

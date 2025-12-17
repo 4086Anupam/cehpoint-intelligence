@@ -26,13 +26,16 @@ export default async function handler(
     const timestamp = Math.round(new Date().getTime() / 1000);
     const folder = 'cehpoint-business-profiles';
     
+    // Parameters for signature - only include params that will be sent in form data
+    // resource_type is NOT signed, it's part of the URL path
+    const params: Record<string, string | number> = {
+      timestamp,
+      folder,
+    };
+    
     // Generate signature for secure upload
     const signature = cloudinary.utils.api_sign_request(
-      {
-        timestamp,
-        folder,
-        tags: 'business-profile,uploaded-document',
-      },
+      params,
       process.env.CLOUDINARY_API_SECRET!
     );
 
