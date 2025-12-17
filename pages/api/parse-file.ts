@@ -1,8 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import mammoth from 'mammoth';
 import { v2 as cloudinary } from 'cloudinary';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const pdfParse = require('pdf-parse');
 
 // Configure Cloudinary for signed URL generation
 cloudinary.config({
@@ -101,6 +99,8 @@ export default async function handler(
     const isTxt = detectedMimeType.includes('text/plain') || fileUrl.toLowerCase().includes('.txt');
     
     if (isPdf) {
+      // Dynamic import for pdf-parse to avoid ESLint issues
+      const pdfParse = (await import('pdf-parse')).default;
       const data = await pdfParse(buffer);
       content = data.text;
       
