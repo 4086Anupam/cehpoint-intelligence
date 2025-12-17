@@ -78,26 +78,47 @@ export default function Discovery() {
     setUploading(true);
     
     try {
-      // First, upload the file to Cloudinary
+      // First, upload the file to Cloudinary using direct upload (bypasses Vercel 4.5MB limit)
       let cloudinaryUrl: string | null = null;
       
       // Only upload PDFs to Cloudinary
       if (selectedFile.type === 'application/pdf' || selectedFile.name.toLowerCase().endsWith('.pdf')) {
         try {
-          const cloudinaryFormData = new FormData();
-          cloudinaryFormData.append('file', selectedFile);
-          
-          const cloudinaryResponse = await fetch('/api/upload-to-cloudinary', {
+          // Step 1: Get signature from our API
+          const signatureResponse = await fetch('/api/get-cloudinary-signature', {
             method: 'POST',
-            body: cloudinaryFormData,
+            headers: { 'Content-Type': 'application/json' },
           });
           
-          if (cloudinaryResponse.ok) {
-            const cloudinaryResult = await cloudinaryResponse.json();
-            cloudinaryUrl = cloudinaryResult.url;
-            console.log('File uploaded to Cloudinary:', cloudinaryUrl);
+          if (signatureResponse.ok) {
+            const { signature, timestamp, folder, cloudName, apiKey } = await signatureResponse.json();
+            
+            // Step 2: Upload directly to Cloudinary (bypasses Vercel limit)
+            const cloudinaryFormData = new FormData();
+            cloudinaryFormData.append('file', selectedFile);
+            cloudinaryFormData.append('signature', signature);
+            cloudinaryFormData.append('timestamp', timestamp.toString());
+            cloudinaryFormData.append('folder', folder);
+            cloudinaryFormData.append('tags', 'business-profile,uploaded-document');
+            cloudinaryFormData.append('api_key', apiKey);
+            
+            const uploadResponse = await fetch(
+              `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+              {
+                method: 'POST',
+                body: cloudinaryFormData,
+              }
+            );
+            
+            if (uploadResponse.ok) {
+              const uploadResult = await uploadResponse.json();
+              cloudinaryUrl = uploadResult.secure_url;
+              console.log('File uploaded to Cloudinary:', cloudinaryUrl);
+            } else {
+              console.warn('Cloudinary direct upload failed, continuing without URL');
+            }
           } else {
-            console.warn('Cloudinary upload failed, continuing without URL');
+            console.warn('Failed to get Cloudinary signature, continuing without URL');
           }
         } catch (cloudError) {
           console.warn('Cloudinary upload error:', cloudError);
