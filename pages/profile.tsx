@@ -48,44 +48,55 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 page-transition">
       <TopBar />
-      <div className="container mx-auto px-4 py-10">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Your Profile</h1>
-            <p className="text-gray-600">Manage your account details</p>
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-2">Your Profile</h1>
+            <p className="text-lg text-gray-600 font-medium">Manage your personal and company details</p>
           </div>
 
-          <Card className="mb-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white flex items-center justify-center shadow-md">
-                <Building2 className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Company</p>
-                <p className="text-xl font-bold text-gray-900">{user?.companyName || 'Not provided'}</p>
-              </div>
-            </div>
-            <div className="space-y-3 text-gray-700">
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-indigo-600" />
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-semibold">{user?.email || '—'}</p>
+          <Card className="mb-8 overflow-hidden !p-0 shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 ring-1 ring-gray-100">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 h-32 w-full relative">
+              <div className="absolute -bottom-12 left-8 p-1 bg-white rounded-full">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-blue-50 flex items-center justify-center shadow-inner">
+                  <Building2 className="w-10 h-10 text-indigo-600" />
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <CalendarClock className="w-5 h-5 text-indigo-600" />
-                <div>
-                  <p className="text-sm text-gray-500">Joined</p>
-                  <p className="font-semibold">{user?.createdAt ? new Date(user.createdAt).toLocaleString() : '—'}</p>
+            </div>
+
+            <div className="pt-16 pb-8 px-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900">{user?.companyName || 'Company Name'}</h2>
+                <p className="text-sm text-gray-500 font-medium">Enterprise Account</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-4 hover:bg-blue-50/50 transition-colors">
+                  <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email Address</p>
+                    <p className="font-semibold text-gray-900 break-all">{user?.email || '—'}</p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 flex items-start gap-4 hover:bg-blue-50/50 transition-colors">
+                  <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <CalendarClock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Member Since</p>
+                    <p className="font-semibold text-gray-900">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </Card>
 
-          <div className="flex justify-between gap-3">
-            <Button variant="outline" onClick={() => router.back()}>Back</Button>
-            <Button variant="primary" onClick={() => router.push('/discovery')}>Go to Discovery</Button>
+          <div className="flex items-center justify-between gap-4">
+            <Button variant="outline" onClick={() => router.back()} className="px-6">Back</Button>
+            <Button variant="primary" onClick={() => router.push('/discovery')} className="shadow-lg shadow-indigo-200">Go to Discovery</Button>
           </div>
         </div>
       </div>
